@@ -1,0 +1,10 @@
+{
+  "presets": [
+    ["@babel/preset-env", {
+      "modules": "commonjs",
+      "useBuiltIns": "usage"
+      // "debug": true
+    }]
+  ],
+  "plugins": [["@babel/transform-runtime", { "corejs": 2}]]
+}
