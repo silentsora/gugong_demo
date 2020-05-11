@@ -50,7 +50,11 @@
                     <video class="video" src="" webkit-playsinline="" playsinline="" x5-video-player-type="h5-page" width="100%" height="100%"></video>
                     <div class="btn-skip"></div>
                 </div> -->
-                <canvas class="canvas"></canvas>
+                <div class="m-canvas absf">
+                    <canvas class="canvas-back"></canvas>
+                    <canvas class="canvas-front"></canvas>
+                </div>
+                <button class="btn-next">确认</button>
                 <div class="portrait-hint">
                     <div class="portrait-hint-inner"></div>
                 </div>
@@ -81,6 +85,8 @@
 
     <!-- 动态生成二维码 -->
     <!-- <script src="<%= require('./src/js/lib/qrcode.min.js') %>"></script> -->
+
+    <script src="<%= require('./src/js/lib/TweenMax.min.js') %>"></script>
 
     <!-- 调试工具 -->
     <script src="<%= require('./src/js/lib/vconsole.min.js') %>"></script>

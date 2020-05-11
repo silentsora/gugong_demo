@@ -94,4 +94,25 @@ Config.mainImgs = {
     ]
 };
 
+Config.dataList = [
+    {
+        name: 'pic0',
+        img: require('../../img/pic0.jpg'),
+        area: require('../../img/pic0_area.png'),
+        border: require('../../img/pic0_border.png')
+    },
+    {
+        name: 'pic1',
+        img: require('../../img/pic1.jpg'),
+        area: require('../../img/pic1_area.png'),
+        border: require('../../img/pic1_border.png')
+    },
+    {
+        name: 'pic2',
+        img: require('../../img/pic2.jpg'),
+        area: require('../../img/pic2_area.png'),
+        border: require('../../img/pic2_border.png')
+    }
+];
+
 export default Config;

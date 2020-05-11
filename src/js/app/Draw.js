@@ -1,12 +1,17 @@
 import Utils from './module/Utils.js';
 import Config from './Config.js';
 // import TD from './module/TD.js';
+import Relic from './Relic.js';
 
 // 加载页对象
 export default class Draw {
     constructor () {
-        this.$canvas = document.querySelector('.canvas');
-        this.ctx = this.$canvas.getContext('2d');
+        this.$canvasBack = document.querySelector('.canvas-back');
+        this.ctxBack = this.$canvasBack.getContext('2d');
+        this.$canvasFront = document.querySelector('.canvas-front');
+        this.ctxFront = this.$canvasFront.getContext('2d');
+        this.$btnNext = document.querySelector('.btn-next');
+        this.$canvasWrap = document.querySelector('.m-canvas');
         this.touchPoint = {
             x: 0,
             y: 0
@@ -14,6 +19,9 @@ export default class Draw {
         this.imageName = 'pic0';
         this.isInit = false;
         this.color = null;
+        this.isSelected = false; // 是否已经选中纹样
+        this.isAnimating = false; // 是否在动画执行中
+        this.type = -1; // 当前纹样, -1未选中
     }
 
     show () {
@@ -39,29 +47,10 @@ export default class Draw {
     drawImage (name) {
         let image = Config.Preload.buffer.imgs[name + '.jpg'];
         // let image = Config.Preload.buffer.imgs[`${name}_type0_area.png`];
-        this.$canvas.width = image.width;
-        this.$canvas.height = image.height;
+        this.$canvasBack.width = image.width;
+        this.$canvasBack.height = image.height;
 
-        this.ctx.drawImage(image, 0, 0, image.width, image.height);
-    }
-
-    getImageData (image) {
-        let canvas = document.createElement('canvas');
-        canvas.width = image.width;
-        canvas.height = image.height;
-
-        let ctx = canvas.getContext('2d');
-
-        ctx.drawImage(image, 0, 0, image.width, image.height);
-
-        // return new Promise((resolve, reject) => {
-        //     setTimeout(() => {
-        //         let imageData = ctx.getImageData(0, 0, image.width, image.height);
-        //         resolve(imageData);
-        //     }, 500);
-        // });
-
-        return ctx.getImageData(0, 0, image.width, image.height);
+        this.ctxBack.drawImage(image, 0, 0, image.width, image.height);
     }
 
     getAreaData (name) {
@@ -69,23 +58,10 @@ export default class Draw {
         // let areaImage = Config.Preload.buffer.imgs[`${name}.jpg`];
         let borderImage = Config.Preload.buffer.imgs[`${name}_border.png`];
 
-        this.areaData = this.getImageData(areaImage);
-        this.borderData = this.getImageData(borderImage);
+        this.areaData = Utils.getImageData(areaImage);
+        this.borderData = Utils.getImageData(borderImage);
 
         console.log(this.areaData);
-    }
-
-    isSimilar (rgb1, rgb2) {
-        let r1 = rgb1.r;
-        let g1 = rgb1.g;
-        let b1 = rgb1.b;
-
-        let r2 = rgb2.r;
-        let g2 = rgb2.g;
-        let b2 = rgb2.b;
-        let similar = Math.sqrt((r2 - r1) * (r2 - r1) + (g2 - g1) * (g2 - g1) + (b2 - b1) * (b2 - b1));
-
-        console.log('similar:', similar);
     }
 
     checkPoint (touchPoint) {
@@ -106,16 +82,30 @@ export default class Draw {
 
         if (r === 0 && g === 0 && b === 255) {
             console.log('蓝色');
-            this.drawBorder({ r: 0, g: 0, b: 255 });
+            this.drawBorder({ r: 0, g: 0, b: 255 }, 'front');
 
             this.color = { r: 0, g: 0, b: 255 };
+            this.type = 1;
         } else if (r === 251 && g === 255 && b === 0) {
             console.log('黄色');
-            this.drawBorder({ r: 251, g: 255, b: 0 });
+            this.drawBorder({ r: 251, g: 255, b: 0 }, 'front');
 
-            this.color = { r: 0, g: 0, b: 255 };
+            this.color = { r: 251, g: 255, b: 0 };
+            this.type = 2;
         } else {
-            this.color = { r: 0, g: 0, b: 0 };
+            this.color = null;
+            Utils.fadeOut(this.$canvasFront);
+            this.disableTouch();
+
+            setTimeout(() => {
+                this.ctxFront.clearRect(0, 0, this.areaData.width, this.areaData.height);
+            }, 600);
+            this.type = -1;
+
+            if (this.isSelected) {
+                this.zoomOut();
+                this.isSelected = false;
+            }
         }
     }
 
@@ -132,7 +122,7 @@ export default class Draw {
         let initX = this.touchPoint.x;
         let initY = this.touchPoint.y;
 
-        this.borderPointList = [];
+        this.borderPixelIndexList = [];
 
         let checkOverList = [];
 
@@ -172,7 +162,7 @@ export default class Draw {
                 return;
             }
 
-            this.borderPointList.push(index);
+            this.borderPixelIndexList.push(index);
 
             // 扩散式递归
             // check(x - 1, y);
@@ -260,31 +250,36 @@ export default class Draw {
         console.log('执行次数:', counter);
     }
 
-    drawBorder (rgb) {
-        let pointList = [];
+    drawBorder (rgb, canvasIndex) {
+        let pixelIndexList = []; // 纹理选区
+        let reversePixelIndexList = []; // 反向纹理选区
 
-        // 选取热区
-        // for (let i = 0; i < this.areaData.data.length; i += 4) {
-        //     let r = this.areaData.data[i];
-        //     let g = this.areaData.data[i + 1];
-        //     let b = this.areaData.data[i + 2];
-        //     // let a = this.areaData.data[i + 3];
+        // 按颜色选取热区
+        for (let i = 0; i < this.areaData.data.length; i += 4) {
+            let r = this.areaData.data[i];
+            let g = this.areaData.data[i + 1];
+            let b = this.areaData.data[i + 2];
+            // let a = this.areaData.data[i + 3];
 
-        //     if (rgb.r === r && rgb.g === g && rgb.b === b) {
-        //         pointList.push(i);
-        //     }
-        // }
+            if (rgb.r === r && rgb.g === g && rgb.b === b) {
+                pixelIndexList.push(i);
+            } else {
+                reversePixelIndexList.push(i);
+            }
+        }
 
-        this.getBorder();
+        this.pixelIndexList = pixelIndexList;
 
-        pointList = this.borderPointList;
+        // 计算点击热区色块范围
+        // this.getBorder();
+        // pixelIndexList = this.borderPixelIndexList;
 
         let image = Config.Preload.buffer.imgs[this.imageName + '.jpg'];
-        let imageData = this.getImageData(image);
+        let imageData = Utils.getImageData(image);
 
         // 替换像素
-        for (let i = 0; i < pointList.length; i++) {
-            let index = pointList[i];
+        for (let i = 0; i < pixelIndexList.length; i++) {
+            let index = pixelIndexList[i];
 
             // 判断是否为透明色
             let borderData = this.borderData.data;
@@ -296,15 +291,231 @@ export default class Draw {
             }
         }
 
-        this.ctx.putImageData(imageData, 0, 0);
+        // 外围填充黑色
+        // for (let i = 0; i < reversePixelIndexList.length; i++) {
+        //     let index = reversePixelIndexList[i];
+
+        //     imageData.data[index] = 0;
+        //     imageData.data[index + 1] = 0;
+        //     imageData.data[index + 2] = 0;
+        //     imageData.data[index + 3] = 255;
+        // }
+
+        // 压暗周围
+        for (let i = 0; i < reversePixelIndexList.length; i++) {
+            let index = reversePixelIndexList[i];
+
+            let r = imageData.data[index];
+            let g = imageData.data[index + 1];
+            let b = imageData.data[index + 2];
+            let a = imageData.data[index + 3];
+
+            let Y = Math.round(0.256788 * r + 0.504129 * g + 0.097906 * b) + 16;
+            let U = Math.round(-0.148223 * r - 0.290993 * g + 0.439216 * b) + 128;
+            let V = Math.round(0.439216 * r - 0.367788 * g - 0.071427 * b) + 128;
+
+            Y -= 80;
+            if (Y < 0) Y = 0;
+            r = Math.round((Y - 16) + 1.140 * (V - 128));
+            g = Math.round((Y - 16) - 0.394 * (U - 128) - 0.581 * (V - 128));
+            b = Math.round((Y - 16) + 2.032 * (U - 128));
+            // a = 255;
+
+            imageData.data[index] = r;
+            imageData.data[index + 1] = g;
+            imageData.data[index + 2] = b;
+            // imageData.data[index + 3] = a;
+        }
+
+        // this.ctxBack.clearRect(0, 0, this.areaData.width, this.areaData.height);
+
+        let canvas, ctx;
+        if (canvasIndex === 'front') {
+            canvas = this.$canvasFront;
+            ctx = this.ctxFront;
+        } else if (canvasIndex = 'back') {
+            canvas = this.$canvasBack;
+            ctx = this.ctxBack;
+        } else {
+            canvas = this.$canvasFront;
+            ctx = this.ctxFront;
+        }
+
+        canvas.width = imageData.width;
+        canvas.height = imageData.height;
+        ctx.putImageData(imageData, 0, 0);
+
+        if (!this.isSelected) {
+            this.disableTouch();
+            Utils.fadeIn(canvas);
+            this.isSelected = true;
+
+            this.zoomIn();
+        }
+    }
+
+    /**
+     * 计算纹样中心点
+     *
+     * @param {array} pixelIndexList 纹样对应像素数据索引
+     * @param {number} width 画布宽度
+     * @returns {object} 纹样中心点和纹样宽高
+     * @memberof Draw
+     */
+    calculateCenter (pixelIndexList, width) {
+        let minX, minY, maxX, maxY;
+
+        for (let i = 0; i < pixelIndexList.length; i++) {
+            let index = pixelIndexList[i];
+            let x = (index / 4) % width;
+            let y = Math.floor((index / 4) / width);
+
+            if (i === 0) {
+                minX = maxX = x;
+                minY = maxY = y;
+            }
+
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+        }
+
+        console.log(`minX:${minX}, maxX:${maxX}, minY:${minY}, maxY:${maxY}`);
+
+        let centerX = Math.floor((minX + maxX) / 2);
+        let centerY = Math.floor((minY + maxY) / 2);
+
+        console.log(`centerX: ${centerX}, centerY: ${centerY}`);
+
+        return { x: centerX, y: centerY, width: maxX - minX, height: maxY - minY };
+    }
+
+    zoomIn () {
+        let centerPoint = this.calculateCenter(this.pixelIndexList, this.areaData.width);
+        // let centerPoint = {
+        //     x: this.areaData.width / 2,
+        //     y: this.areaData.height / 2
+        // };
+
+        let initPoint = {
+            x: this.areaData.width / 2,
+            y: this.areaData.height / 2
+        };
+
+        let scaleX = 750 / centerPoint.width / 1.5;
+        let scaleY = (window.innerHeight / (window.innerWidth / 750)) / centerPoint.height / 1.5;
+        let scale = scaleX > scaleY ? scaleY : scaleX;
+        if (scale < 1) scale = 1;
+
+        let moveX = Math.floor((initPoint.x - centerPoint.x) * this.ratio * scale);
+        let moveY = Math.floor((initPoint.y - centerPoint.y) * this.ratio * scale);
+
+        // 位移太小不如不移动
+        console.log(`moveX: ${moveX}, moveY: ${moveY}`);
+        if (Math.abs(moveX) < 10 && Math.abs(moveY) < 10) {
+            moveX = 0;
+            moveY = 0;
+        }
+
+        TweenMax.to(document.querySelector('.m-canvas'), 0.6, {
+            x: moveX,
+            y: moveY,
+            scale: scale
+        });
+    }
+
+    zoomOut () {
+        TweenMax.to(document.querySelector('.m-canvas'), 0.6, {
+            x: 0,
+            y: 0,
+            scale: 1
+        });
+    }
+
+    /**
+     * 前往下一个文物
+     *
+     * @param {object} color 识别颜色
+     * @returns
+     * @memberof Draw
+     */
+    async goNext (color) {
+        if (this.isAnimating) return;
+        if (color === null) return;
+        if (this.type < 0) return;
+
+        let data = Config.dataList[this.type];
+
+        switch (this.type) {
+            // 龙纹
+            case 0:
+                break;
+            // 云朵
+            case 1:
+                break;
+        }
+        // this.zoomIn();
+
+        console.log(data);
+        let newRelic = new Relic(data.name);
+        await newRelic.loadImg();
+        let newData = newRelic.drawBorder(this.color);
+
+        this.$canvasBack.width = newData.width;
+        this.$canvasBack.height = newData.height;
+        this.ctxBack.putImageData(newData, 0, 0);
+        Utils.fadeOut(this.$canvasFront);
+        TweenMax.to(this.$canvasWrap, 0.6, {
+            x: 0,
+            y: 0,
+            scale: 1
+        });
+    }
+
+    reset () {
+        this.color = null;
+        this.pixelIndexList = [];
+        this.isSelected = false;
+        this.type = -1;
+    }
+
+    disableTouch (delay = 600) {
+        this.isAnimating = true;
+        setTimeout(() => {
+            this.isAnimating = false;
+        }, delay);
     }
 
     bindEvent () {
-        this.$canvas.addEventListener('click', (e) => {
-            let ratio = this.$canvas.clientWidth / this.$canvas.width;
-            this.touchPoint.x = Math.floor(e.clientX / ratio);
-            this.touchPoint.y = Math.floor(e.clientY / ratio);
+        this.$canvasBack.addEventListener('click', (e) => {
+            if (this.isAnimating) return;
+            let ratio = this.$canvasBack.clientWidth / this.$canvasBack.width;
+            this.ratio = ratio;
+            this.touchPoint.x = Math.floor(e.offsetX / ratio);
+            this.touchPoint.y = Math.floor(e.offsetY / ratio);
             this.checkPoint(this.touchPoint);
+        });
+
+        this.$btnNext.addEventListener('click', () => {
+            this.goNext(this.color);
+        });
+
+        this.$canvasWrap.addEventListener('click', (e) => {
+            if (e.target.tagName === 'CANVAS') return;
+            if (!this.isSelected || this.isAnimating) return;
+            this.color = null;
+            Utils.fadeOut(this.$canvasFront);
+            this.disableTouch();
+
+            if (this.isSelected) {
+                setTimeout(() => {
+                    this.ctxFront.clearRect(0, 0, this.areaData.width, this.areaData.height);
+                }, 600);
+                this.zoomOut();
+                this.isSelected = false;
+                this.type = -1;
+            }
         });
     }
 };

@@ -281,4 +281,39 @@ Utils.followLine = (ctx, text, spacing, fontSize, color) => {
     };
 };
 
+Utils.getColorSimilar = (rgb1, rgb2) => {
+    let r1 = rgb1.r;
+    let g1 = rgb1.g;
+    let b1 = rgb1.b;
+
+    let r2 = rgb2.r;
+    let g2 = rgb2.g;
+    let b2 = rgb2.b;
+    let similar = Math.sqrt((r2 - r1) * (r2 - r1) + (g2 - g1) * (g2 - g1) + (b2 - b1) * (b2 - b1));
+
+    console.log('similar:', similar);
+};
+
+Utils.getImageData = (image) => {
+    let canvas = document.createElement('canvas');
+    canvas.width = image.width;
+    canvas.height = image.height;
+
+    let ctx = canvas.getContext('2d');
+
+    ctx.drawImage(image, 0, 0, image.width, image.height);
+
+    // return new Promise((resolve, reject) => {
+    //     setTimeout(() => {
+    //         let imageData = ctx.getImageData(0, 0, image.width, image.height);
+    //         resolve(imageData);
+    //     }, 500);
+    // });
+
+    let data = ctx.getImageData(0, 0, image.width, image.height);
+    canvas = null; // 清除内存
+
+    return data;
+};
+
 export default Utils;
