@@ -441,26 +441,43 @@ export default class Draw {
         //     scale: scale
         // });
 
-        TweenMax.to(this.$canvasFront, this.DURATION / 1000, {
-            x: moveX - this.areaData.width / 2 * this.ratio,
-            y: moveY - this.areaData.height / 2 * this.ratio,
-            scale: scale
-        });
-
+        // this.$canvasFront.style.display = 'block';
         Utils.fadeIn(document.querySelector('.canvas-text'));
+        if (scale > 1) {
+            Utils.fadeIn(this.$canvasFront, this.DURATION);
 
-        setTimeout(() => {
-            // Utils.fadeOut(this.$canvasWrap, this.DURATION);
-            this.goNext(this.color);
-        }, this.DURATION);
+            setTimeout(() => {
+                TweenMax.to(this.$canvasFront, this.DURATION / 1000, {
+                    x: moveX - this.areaData.width / 2 * this.ratio,
+                    y: moveY - this.areaData.height / 2 * this.ratio,
+                    scale: scale
+                });
 
-        // setTimeout(() => {
-        //     this.goNext(this.color);
-        // }, this.DURATION * 2);
+                setTimeout(() => {
+                    // Utils.fadeOut(this.$canvasWrap, this.DURATION);
+                    // document.querySelector('.touch-hint-2').style.display = 'none';
+                    this.goNext(this.color);
+                }, this.DURATION);
+            }, this.DURATION);
+        } else {
+            // if (moveX === 0 && moveY === 0) {
+            //     Utils.fadeIn(document.querySelector('.canvas-text'));
+            //     this.goNext(this.color);
+            //     console.log('sfsafsa');
+            // } else {
+            TweenMax.to(this.$canvasFront, this.DURATION / 1000, {
+                x: moveX - this.areaData.width / 2 * this.ratio,
+                y: moveY - this.areaData.height / 2 * this.ratio,
+                scale: scale
+            });
 
-        // setTimeout(() => {
-        //     Utils.fadeIn(this.$canvasWrap);
-        // }, 1800);
+            setTimeout(() => {
+                // Utils.fadeOut(this.$canvasWrap, this.DURATION);
+                // document.querySelector('.touch-hint-2').style.display = 'none';
+                this.goNext(this.color);
+            }, this.DURATION);
+            // }
+        }
     }
 
     zoomOut () {
@@ -518,6 +535,8 @@ export default class Draw {
             this.$canvasBack.width = frontData.width;
             this.$canvasBack.height = frontData.height;
             this.ctxBack.putImageData(frontData, 0, 0);
+
+            document.querySelector('.touch-hint-2').style.display = 'none';
 
             setTimeout(() => {
                 // Utils.fadeIn(this.$canvasWrap, this.DURATION);
@@ -605,7 +624,53 @@ export default class Draw {
             document.querySelector('.touch-hint-1').style.display = 'none';
             document.querySelector('.touch-hint-2').style.display = 'none';
             this.isAnimating = false;
-        }, 6600);
+            this.showBorder();
+        }, 4600);
+    }
+
+    showBorder () {
+        this.isAnimating = true;
+        let data = this.borderData;
+        for (let i = 0; i < data.data.length; i += 4) {
+            let r = data.data[i];
+            let g = data.data[i + 1];
+            let b = data.data[i + 2];
+            let a = data.data[i + 3];
+
+            if (a !== 0) {
+                data.data[i] = 251;
+                data.data[i + 1] = 255;
+                data.data[i + 2] = 0;
+
+                // this.imageData.data[i] = 251;
+                // this.imageData.data[i + 1] = 255;
+                // this.imageData.data[i + 2] = 0;
+                // this.imageData.data[i + 3] = data.data[i + 3];
+            } else {
+                // data.data[i] = this.imageData.data[i];
+                // data.data[i + 1] = this.imageData.data[i + 1];
+                // data.data[i + 2] = this.imageData.data[i + 2];
+                // data.data[i + 3] = this.imageData.data[i + 3];
+            }
+        }
+
+        // this.ctxBack.putImageData(data, 0, 0);
+        let canvas = document.querySelector('.touch-hint-2');
+        let ctx = canvas.getContext('2d');
+        canvas.width = data.width;
+        canvas.height = data.height;
+        ctx.putImageData(data, 0, 0);
+        Utils.fadeIn(canvas, this.DURATION);
+
+        setTimeout(() => {
+            this.isAnimating = false;
+            // this.ctxBack.putImageData(data, 0, 0);
+        }, this.DURATION);
+
+        setTimeout(() => {
+            // this.ctxBack.putImageData(this.imageData, 0, 0);
+            // this.$canvasFront.style.display = 'none';
+        }, this.DURATION + 200);
     }
 
     reset () {
