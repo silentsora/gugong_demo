@@ -22,7 +22,7 @@ export default class Draw {
         this.isSelected = false; // 是否已经选中纹样
         this.isAnimating = false; // 是否在动画执行中
         this.type = -1; // 当前纹样, -1未选中
-        this.ZOOMRATIO = 1.4;
+        this.ZOOMRATIO = 1.6;
         this.DURATION = 800;
     }
 
@@ -289,9 +289,14 @@ export default class Draw {
             // 判断是否为透明色
             let borderData = this.borderData.data;
             if (borderData[index + 3] !== 0) {
-                imageData.data[index] = borderData[index];
-                imageData.data[index + 1] = borderData[index + 1];
-                imageData.data[index + 2] = borderData[index + 2];
+                // imageData.data[index] = borderData[index];
+                // imageData.data[index + 1] = borderData[index + 1];
+                // imageData.data[index + 2] = borderData[index + 2];
+                // imageData.data[index + 3] = borderData[index + 3];
+
+                imageData.data[index] = 251;
+                imageData.data[index + 1] = 255;
+                imageData.data[index + 2] = 0;
                 imageData.data[index + 3] = borderData[index + 3];
             }
         }
@@ -442,6 +447,8 @@ export default class Draw {
             scale: scale
         });
 
+        Utils.fadeIn(document.querySelector('.canvas-text'));
+
         setTimeout(() => {
             // Utils.fadeOut(this.$canvasWrap, this.DURATION);
             this.goNext(this.color);
@@ -524,12 +531,19 @@ export default class Draw {
                 //     y: 0,
                 //     scale: 1
                 // });
+                Utils.fadeOut(document.querySelector('.canvas-text'));
             }, this.DURATION + 300);
         }, this.DURATION);
     }
 
     showTouchHint () {
+        this.isAnimating = true;
+
         let data = this.borderData;
+        let border1, border2;
+        console.log(data);
+        border1 = new ImageData(data.width, data.height);
+        border2 = new ImageData(data.width, data.height);
         for (let i = 0; i < data.data.length; i += 4) {
             let r = data.data[i];
             let g = data.data[i + 1];
@@ -537,26 +551,61 @@ export default class Draw {
             let a = data.data[i + 3];
 
             if (a !== 0) {
-                data.data[i] = 251;
-                data.data[i + 1] = 255;
-                data.data[i + 2] = 0;
+                // data.data[i] = 251;
+                // data.data[i + 1] = 255;
+                // data.data[i + 2] = 0;
+
+                if (data.data[i] === 0) {
+                    border1.data[i] = 251;
+                    border1.data[i + 1] = 255;
+                    border1.data[i + 2] = 0;
+                    border1.data[i + 3] = data.data[i + 3];
+                } else {
+                    border2.data[i] = 251;
+                    border2.data[i + 1] = 255;
+                    border2.data[i + 2] = 0;
+                    border2.data[i + 3] = data.data[i + 3];
+                }
                 // data.data[i + 3] = 255;
                 // data.data[i + 3] = data.data[i + 3];
             } else {
-                data.data[i] = this.imageData.data[i];
-                data.data[i + 1] = this.imageData.data[i + 1];
-                data.data[i + 2] = this.imageData.data[i + 2];
-                data.data[i + 3] = this.imageData.data[i + 3];
+                // data.data[i] = this.imageData.data[i];
+                // data.data[i + 1] = this.imageData.data[i + 1];
+                // data.data[i + 2] = this.imageData.data[i + 2];
+                // data.data[i + 3] = this.imageData.data[i + 3];
+
+                border1.data[i] = 255;
+                border1.data[i + 1] = 255;
+                border1.data[i + 2] = 255;
+                border1.data[i + 3] = 0;
+
+                border1.data[i] = 255;
+                border1.data[i + 1] = 255;
+                border1.data[i + 2] = 255;
+                border1.data[i + 3] = 0;
             }
         }
 
-        // this.$canvasFront.width = data.width;
-        // this.$canvasFront.height = data.height;
-        // this.ctxFront.putImageData(data, 0, 0);
+        // this.ctxBack.putImageData(data, 0, 0);
 
-        // Utils.fadeIn(this.$canvasFront);
+        let ctx1 = document.querySelector('.touch-hint-1').getContext('2d');
+        let ctx2 = document.querySelector('.touch-hint-2').getContext('2d');
 
-        this.ctxBack.putImageData(data, 0, 0);
+        document.querySelector('.touch-hint-1').width = data.width;
+        document.querySelector('.touch-hint-1').height = data.height;
+        document.querySelector('.touch-hint-2').width = data.width;
+        document.querySelector('.touch-hint-2').height = data.height;
+        ctx1.putImageData(border1, 0, 0);
+        ctx2.putImageData(border2, 0, 0);
+
+        document.querySelector('.touch-hint-1').style.display = 'block';
+        document.querySelector('.touch-hint-2').style.display = 'block';
+
+        setTimeout(() => {
+            document.querySelector('.touch-hint-1').style.display = 'none';
+            document.querySelector('.touch-hint-2').style.display = 'none';
+            this.isAnimating = false;
+        }, 6600);
     }
 
     reset () {
