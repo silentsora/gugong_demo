@@ -99,27 +99,33 @@ export default class Relic {
         // this.getBorder();
         // pixelIndexList = this.borderPixelIndexList;
 
-        let imageData = this.imageData;
+        let imageData = this.ctx.createImageData(this.imageData);
+        // let imageData = this.imageData;
+        this.rgb = rgb;
+
+        for (let i = 0; i < this.imageData.data.length; i++) {
+            imageData.data[i] = this.imageData.data[i];
+        }
 
         // 替换像素
-        // for (let i = 0; i < pixelIndexList.length; i++) {
-        //     let index = pixelIndexList[i];
+        for (let i = 0; i < pixelIndexList.length; i++) {
+            let index = pixelIndexList[i];
 
-        //     // 判断是否为透明色
-        //     let borderData = this.borderData.data;
-        //     if (borderData[index + 3] !== 0) {
-        //         imageData.data[index] = borderData[index];
-        //         imageData.data[index + 1] = borderData[index + 1];
-        //         imageData.data[index + 2] = borderData[index + 2];
-        //         imageData.data[index + 3] = borderData[index + 3];
+            // 判断是否为透明色
+            let borderData = this.borderData.data;
+            if (borderData[index + 3] !== 0) {
+                // imageData.data[index] = borderData[index];
+                // imageData.data[index + 1] = borderData[index + 1];
+                // imageData.data[index + 2] = borderData[index + 2];
+                // imageData.data[index + 3] = borderData[index + 3];
 
-        //         // 替换成黄色边缘
-        //         // imageData.data[index] = 251;
-        //         // imageData.data[index + 1] = 255;
-        //         // imageData.data[index + 2] = 0;
-        //         // imageData.data[index + 3] = borderData[index + 3];
-        //     }
-        // }
+                // 替换成黄色边缘
+                imageData.data[index] = 251;
+                imageData.data[index + 1] = 255;
+                imageData.data[index + 2] = 0;
+                imageData.data[index + 3] = borderData[index + 3];
+            }
+        }
 
         // 外围填充黑色
         // for (let i = 0; i < reversePixelIndexList.length; i++) {
@@ -132,30 +138,30 @@ export default class Relic {
         // }
 
         // 压暗周围
-        // for (let i = 0; i < reversePixelIndexList.length; i++) {
-        //     let index = reversePixelIndexList[i];
+        for (let i = 0; i < reversePixelIndexList.length; i++) {
+            let index = reversePixelIndexList[i];
 
-        //     let r = imageData.data[index];
-        //     let g = imageData.data[index + 1];
-        //     let b = imageData.data[index + 2];
-        //     let a = imageData.data[index + 3];
+            let r = imageData.data[index];
+            let g = imageData.data[index + 1];
+            let b = imageData.data[index + 2];
+            let a = imageData.data[index + 3];
 
-        //     let Y = Math.round(0.256788 * r + 0.504129 * g + 0.097906 * b) + 16;
-        //     let U = Math.round(-0.148223 * r - 0.290993 * g + 0.439216 * b) + 128;
-        //     let V = Math.round(0.439216 * r - 0.367788 * g - 0.071427 * b) + 128;
+            let Y = Math.round(0.256788 * r + 0.504129 * g + 0.097906 * b) + 16;
+            let U = Math.round(-0.148223 * r - 0.290993 * g + 0.439216 * b) + 128;
+            let V = Math.round(0.439216 * r - 0.367788 * g - 0.071427 * b) + 128;
 
-        //     Y -= 100;
-        //     if (Y < 0) Y = 0;
-        //     r = Math.round((Y - 16) + 1.140 * (V - 128));
-        //     g = Math.round((Y - 16) - 0.394 * (U - 128) - 0.581 * (V - 128));
-        //     b = Math.round((Y - 16) + 2.032 * (U - 128));
-        //     // a = 255;
+            Y -= 100;
+            if (Y < 0) Y = 0;
+            r = Math.round((Y - 16) + 1.140 * (V - 128));
+            g = Math.round((Y - 16) - 0.394 * (U - 128) - 0.581 * (V - 128));
+            b = Math.round((Y - 16) + 2.032 * (U - 128));
+            // a = 255;
 
-        //     imageData.data[index] = r;
-        //     imageData.data[index + 1] = g;
-        //     imageData.data[index + 2] = b;
-        //     imageData.data[index + 3] = a;
-        // }
+            imageData.data[index] = r;
+            imageData.data[index + 1] = g;
+            imageData.data[index + 2] = b;
+            imageData.data[index + 3] = a;
+        }
 
         return imageData;
     }
@@ -183,6 +189,75 @@ export default class Relic {
         // }
 
         return this.imageData;
+    }
+
+    getHighlightState () {
+        let data = this.borderData;
+        for (let i = 0; i < data.data.length; i += 4) {
+            let r = data.data[i];
+            let g = data.data[i + 1];
+            let b = data.data[i + 2];
+            let a = data.data[i + 3];
+
+            if (a !== 0) {
+                data.data[i] = 251;
+                data.data[i + 1] = 255;
+                data.data[i + 2] = 0;
+                // data.data[i + 3] = 255;
+                // data.data[i + 3] = data.data[i + 3];
+            } else {
+                data.data[i] = this.imageData.data[i];
+                data.data[i + 1] = this.imageData.data[i + 1];
+                data.data[i + 2] = this.imageData.data[i + 2];
+                data.data[i + 3] = this.imageData.data[i + 3];
+            }
+        }
+
+        let pixelIndexList = []; // 纹理选区
+        let reversePixelIndexList = []; // 反向纹理选区
+        let rgb = this.rgb;
+
+        // 按颜色选取热区
+        for (let i = 0; i < this.areaData.data.length; i += 4) {
+            let r = this.areaData.data[i];
+            let g = this.areaData.data[i + 1];
+            let b = this.areaData.data[i + 2];
+            // let a = this.areaData.data[i + 3];
+
+            if (rgb.r === r && rgb.g === g && rgb.b === b) {
+                pixelIndexList.push(i);
+            } else {
+                reversePixelIndexList.push(i);
+            }
+        }
+
+        // 压暗周围
+        for (let i = 0; i < reversePixelIndexList.length; i++) {
+            let index = reversePixelIndexList[i];
+
+            let r = data[index];
+            let g = data[index + 1];
+            let b = data[index + 2];
+            let a = data[index + 3];
+
+            let Y = Math.round(0.256788 * r + 0.504129 * g + 0.097906 * b) + 16;
+            let U = Math.round(-0.148223 * r - 0.290993 * g + 0.439216 * b) + 128;
+            let V = Math.round(0.439216 * r - 0.367788 * g - 0.071427 * b) + 128;
+
+            Y -= 100;
+            if (Y < 0) Y = 0;
+            r = Math.round((Y - 16) + 1.140 * (V - 128));
+            g = Math.round((Y - 16) - 0.394 * (U - 128) - 0.581 * (V - 128));
+            b = Math.round((Y - 16) + 2.032 * (U - 128));
+            // a = 255;
+
+            data[index] = r;
+            data[index + 1] = g;
+            data[index + 2] = b;
+            data[index + 3] = a;
+        }
+
+        return data;
     }
 
     /**

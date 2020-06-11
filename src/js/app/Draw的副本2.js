@@ -2,7 +2,6 @@ import Utils from './module/Utils.js';
 import Config from './Config.js';
 // import TD from './module/TD.js';
 import Relic from './Relic.js';
-import addTransition from './Transition.js';
 
 // import transitions from 'gl-transitions';
 // import createTransition from 'gl-transition';
@@ -12,13 +11,12 @@ export default class Draw {
     constructor () {
         this.$canvasBack = document.querySelector('.canvas-back');
         this.ctxBack = this.$canvasBack.getContext('2d');
-        // this.glBack = this.$canvasBack.getContext('webgl') || this.$canvasBack.getContext('experimental-webgl');
+        this.glBack = this.$canvasBack.getContext('webgl') || this.$canvasBack.getContext('experimental-webgl');
         this.$canvasFront = document.querySelector('.canvas-front');
         this.ctxFront = this.$canvasFront.getContext('2d');
-        // this.glFront = this.$canvasFront.getContext('webgl') || this.$canvasFront.getContext('experimental-webgl');
+        this.glFront = this.$canvasFront.getContext('webgl') || this.$canvasFront.getContext('experimental-webgl');
         this.$btnNext = document.querySelector('.btn-next');
         this.$canvasWrap = document.querySelector('.m-canvas');
-        this.$canvasWebgl = document.querySelector('.canvas-webgl');
         this.touchPoint = {
             x: 0,
             y: 0
@@ -529,49 +527,37 @@ export default class Draw {
         let frontData = newRelic.getDefaultState();
         let newData = newRelic.drawBorder(this.color);
 
-        // setTimeout(() => {
-        // this.$canvasBack.width = newData.width;
-        // this.$canvasBack.height = newData.height;
-        // this.ctxBack.putImageData(newData, 0, 0);
-        newRelic.zoomIn(this.$canvasBack, 100);
-
-        // Utils.fadeOut(this.$canvasBack, this.DURATION);
-
-        // Utils.fadeOut(this.$canvasFront, 50);
-
-        this.$canvasBack.width = frontData.width;
-        this.$canvasBack.height = frontData.height;
-        this.ctxBack.putImageData(newData, 0, 0);
-
-        document.querySelector('.touch-hint-2').style.display = 'none';
-
-        await addTransition(this.$canvasFront, this.$canvasBack);
-        this.ctxBack.putImageData(frontData, 0, 0);
-        this.$canvasFront.style.display = 'none';
-        // this.$canvasBack.style.display = 'none';
-        TweenMax.to(this.$canvasBack, 0.1, {
-            x: -this.$canvasBack.clientWidth / 2,
-            y: -this.$canvasBack.clientHeight / 2,
-            scale: 1.3
-        });
-
         setTimeout(() => {
-            // this.$canvasBack.style.display = 'block';
-            // Utils.fadeIn(this.$canvasWrap, this.DURATION);
-            Utils.fadeOut(this.$canvasWebgl, this.DURATION);
-            // Utils.fadeOut(this.$canvasFront, this.DURATION);
-            Utils.fadeIn(this.$canvasBack, this.DURATION);
-        }, 300);
+            // this.$canvasBack.width = newData.width;
+            // this.$canvasBack.height = newData.height;
+            // this.ctxBack.putImageData(newData, 0, 0);
+            newRelic.zoomIn(this.$canvasBack, 100);
 
-        setTimeout(() => {
-            // TweenMax.to(this.$canvasWrap, this.DURATION / 1000, {
-            //     x: 0,
-            //     y: 0,
-            //     scale: 1
-            // });
-            Utils.fadeOut(document.querySelector('.canvas-text'));
-        }, this.DURATION + 300);
-        // }, this.DURATION);
+            // Utils.fadeOut(this.$canvasBack, this.DURATION);
+
+            // Utils.fadeOut(this.$canvasFront, 50);
+
+            this.$canvasBack.width = frontData.width;
+            this.$canvasBack.height = frontData.height;
+            this.ctxBack.putImageData(frontData, 0, 0);
+
+            document.querySelector('.touch-hint-2').style.display = 'none';
+
+            setTimeout(() => {
+                // Utils.fadeIn(this.$canvasWrap, this.DURATION);
+                Utils.fadeOut(this.$canvasFront, this.DURATION);
+                Utils.fadeIn(this.$canvasBack, this.DURATION);
+            }, 300);
+
+            setTimeout(() => {
+                // TweenMax.to(this.$canvasWrap, this.DURATION / 1000, {
+                //     x: 0,
+                //     y: 0,
+                //     scale: 1
+                // });
+                Utils.fadeOut(document.querySelector('.canvas-text'));
+            }, this.DURATION + 300);
+        }, this.DURATION);
     }
 
     showTouchHint () {
@@ -714,13 +700,13 @@ export default class Draw {
         //     transition.draw((t / 1000) % 1, from, to, this.$canvasFront.width, this.$canvasFront.height, { persp: 1.5, unzoom: 0.6 });
         // };
         this.$canvasBack.addEventListener('click', (e) => {
-            if (this.isEnd) return;
-            if (this.isAnimating) return;
-            let ratio = this.$canvasBack.clientWidth / this.imageData.width;
-            this.ratio = ratio;
-            this.touchPoint.x = Math.floor(e.offsetX / ratio);
-            this.touchPoint.y = Math.floor(e.offsetY / ratio);
-            this.checkPoint(this.touchPoint);
+            // if (this.isEnd) return;
+            // if (this.isAnimating) return;
+            // let ratio = this.$canvasBack.clientWidth / this.imageData.width;
+            // this.ratio = ratio;
+            // this.touchPoint.x = Math.floor(e.offsetX / ratio);
+            // this.touchPoint.y = Math.floor(e.offsetY / ratio);
+            // this.checkPoint(this.touchPoint);
         });
 
         this.$btnNext.addEventListener('click', () => {

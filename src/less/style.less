@@ -156,6 +156,11 @@ html, body {
         animation: fadeinout 1.6s 2 linear 1.4s;
         pointer-events: none;
     }
+
+    .canvas-webgl {
+        pointer-events: none;
+        transform: translate(-50%, -50%) rotateZ(180deg) rotateY(180deg);
+    }
 }
 
 .btn-next {
@@ -172,6 +177,20 @@ html, body {
     display: none;
 }
 
+.btn-switch {
+    width: 2rem;
+    height: 0.7rem;
+    background: #aaa;
+    font-size: 0.36rem;
+    color: #000;
+
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin: 450px 0 0 -100px;
+    display: none;
+}
+
 .canvas-text {
     font-size: 0.28rem;
     color: #fff;
@@ -181,4 +200,14 @@ html, body {
     width: 100%;
     margin-top: 440px;
     display: none;
+}
+
+.transition-type {
+    font-size: 0.36rem;
+    color: #fff;
+    position: absolute;
+    top: 50%;
+    margin-top: -5rem;
+    width: 100%;
+    text-align: center;
 }
