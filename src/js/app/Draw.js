@@ -49,7 +49,8 @@ export default class Draw {
         this.bindEvent();
         this.drawImage(this.imageName);
         this.getAreaData(this.imageName);
-        this.showTouchHint();
+        // this.showTouchHint();
+        this.showBorder();
 
         this.isInit = true;
     }
@@ -100,10 +101,10 @@ export default class Draw {
             this.type = 1;
         } else if (r === 251 && g === 255 && b === 0) {
             console.log('黄色');
-            this.drawBorder({ r: 251, g: 255, b: 0 }, 'front');
+            // this.drawBorder({ r: 251, g: 255, b: 0 }, 'front');
 
-            this.color = { r: 251, g: 255, b: 0 };
-            this.type = 2;
+            // this.color = { r: 251, g: 255, b: 0 };
+            // this.type = 2;
         } else {
             this.color = null;
             Utils.fadeOut(this.$canvasFront, this.DURATION);
@@ -545,7 +546,34 @@ export default class Draw {
 
         document.querySelector('.touch-hint-2').style.display = 'none';
 
+        // const imgFront = new Image();
+        // // imgFront.src = this.$canvasFront.toDataURL();
+        // imgFront.src = require('../../img/pic0.jpg');
+
+        // const imgBack = new Image();
+        // // imgBack.src = this.$canvasBack.toDataURL();
+        // imgBack.src = require('../../img/pic1.jpg');
+
+        // const promise1 = new Promise((resolve, reject) => {
+        //     imgFront.onload = () => {
+        //         resolve();
+        //     };
+        // });
+        // const promise2 = new Promise((resolve, reject) => {
+        //     imgBack.onload = () => {
+        //         resolve();
+        //     };
+        // });
+
+        TweenMax.to(this.$canvasWebgl, 0.1, {
+            x: -this.$canvasWebgl.clientWidth / 2,
+            y: -this.$canvasWebgl.clientHeight
+        });
+
+        // await Promise.all([promise1, promise2]);
+
         await addTransition(this.$canvasFront, this.$canvasBack);
+        // await addTransition(imgFront, imgBack);
         this.ctxBack.putImageData(frontData, 0, 0);
         this.$canvasFront.style.display = 'none';
         // this.$canvasBack.style.display = 'none';

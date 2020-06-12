@@ -32,11 +32,13 @@ export default async function addTransition (from, to) {
         let list = ['WaterDrop', 'CrossZoom', 'Dreamy', 'GridFlip', 'InvertedPageCurl', 'crosshatch', 'displacement', 'luma', 'morph', 'perlin', 'randomsquares', 'ripple', 'rotate_scale_fade', 'swap'];
         let initName = 'morph';
         initName = 'perlin';
+        initName = 'ColourDistance';
+        initName = 'WaterDrop';
         console.log(transitions);
         let transition = createTransition(gl, transitions.find(t => t.name === initName), {
             resizeMode: 'cover'
         });
-        document.querySelector('.transition-type').innerHTML = initName;
+        // document.querySelector('.transition-type').innerHTML = initName;
 
         let counter = 0;
 
@@ -49,10 +51,22 @@ export default async function addTransition (from, to) {
                 // } else {
                 //     uTime = 0;
                 // }
+
+                // perlin
+                // let uTime = Math.abs(Math.sin(counter / 90));
+                // transition.draw(uTime, from, to, canvas.width, canvas.height, { smoothness: 0.1, seed: 2 });
+
+                // ColourDistance
+                // let uTime = Math.abs(Math.sin(counter / 60));
+                // transition.draw(uTime, from, to, canvas.width, canvas.height, { power: 3 });
+
+                // normal
                 let uTime = Math.abs(Math.sin(counter / 60));
-                console.log(uTime);
                 transition.draw(uTime, from, to, canvas.width, canvas.height);
+
                 counter++;
+
+                console.log(uTime);
 
                 if (uTime < 0.98) {
                     // transition.draw((t / 3000) % 1, from, to, canvas.width, canvas.height, { amplitude: 30, speed: 30 });
